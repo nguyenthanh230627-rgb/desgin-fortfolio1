@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Architect | Elite Portfolio</title>
+    <style>
+        :root {
+            --bg:      oklch(99% 0.002 240);
+            --surface: oklch(100% 0 0);
+            --fg:      oklch(18% 0.012 250);
+            --muted:   oklch(54% 0.012 250);
+            --border:  oklch(92% 0.005 250);
+            --accent:  oklch(58% 0.18 255); /* Sharp Electric Blue */
+
+            --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+            --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+            --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: var(--font-body);
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #cursor {
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            image-rendering: pixelated;
+            box-shadow: 4px 4px 0 var(--fg);
+            transition: transform 0.1s ease;
+        }
+
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(var(--border) 1px, transparent 1px),
+                              linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .grain {
+            position: fixed;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .telemetry-column {
+            position: fixed;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 60vh;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            overflow: hidden;
+            font-family: var(--font-mono);
+            font-size: 0.5rem;
+            color: var(--muted);
+            writing-mode: vertical-rl;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            z-index: 10;
+        }
+
+        .telemetry-scroll {
+            animation: scroll-v 25s linear infinite;
+            display: flex;
+            gap: 2rem;
+        }
+
+        @keyframes scroll-v {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+
+        .scroll-progress {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .progress-dot {
+            width: 4px;
+            height: 4px;
+            background: var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            height: 24px;
+            background: var(--accent);
+        }
+
+        .scroller {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        section {
+            height: 100vh;
+            width: 100%;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 15vw;
+        }
+
+        h1, h2 {
+            font-family: var(--font-display);
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            text-transform: uppercase;
+        }
+
+        h1 { font-size: clamp(4rem, 12vw, 10rem); line-height: 0.8; }
+        h2 { font-size: clamp(2.5rem, 6vw, 5rem); line-height: 0.9; margin-bottom: 1rem; }
+
+        .kicker {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        header {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            right: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 100;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+        }
+
+        .sys-info {
+            display: flex;
+            gap: 3rem;
+            color: var(--muted);
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        .project-card {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 5vw;
+            align-items: center;
+            position: relative;
+        }
+
+        .image-frame {
+            background: var(--surface);
+            border: 2px solid var(--fg);
+            aspect-ratio: 16/10;
+            position: relative;
+            box-shadow: 16px 16px 0 var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .image-frame:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 20px 20px 0 var(--accent);
+        }
+
+        .image-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: contrast(1.1);
+            transition: transform 0.8s ease;
+        }
+
+        .image-frame:hover img {
+            transform: scale(1.05);
+        }
+
+        .style-chip {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--fg);
+            color: var(--bg);
+            padding: 4px 8px;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            z-index: 5;
+        }
+
+        .meta-tag {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.5rem;
+            color: var(--bg);
+            background: var(--accent);
+            padding: 2px 6px;
+            z-index: 5;
+            mix-blend-mode: difference;
+        }
+
+        .coord-marker {
+            position: absolute;
+            font-family: var(--font-mono);
+            font-size: 0.5rem;
+            color: var(--muted);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .pixel-bot {
+            position: fixed;
+            bottom: 4rem;
+            right: 4rem;
+            width: 40px;
+            height: 40px;
+            z-index: 100;
+            image-rendering: pixelated;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        #tweaks {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            z-index: 1000;
+            box-shadow: 4px 4px 0 var(--border);
+        }
+
+        .tweak-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 2px 6px;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        .tweak-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        .pixel-divider {
+            height: 1px;
+            background: repeating-linear-gradient(90deg, var(--border), var(--border) 4px, transparent 4px, transparent 8px);
+            width: 100%;
+            margin: 2rem 0;
+        }
+
+        .tech-spec {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            margin-top: 1rem;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .tech-spec span {
+            color: var(--accent);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="cursor"></div>
+    <div class="bg-grid"></div>
+    <div class="grain"></div>
+
+    <div class="telemetry-column">
+        <div class="telemetry-scroll">
+            <span>EXECUTING_NODE_TREE_AUDIT</span>
+            <span>OPTIMIZING_CORE_WEB_VITALS</span>
+            <span>DOM_DEPTH_STABLE_AT_12</span>
+            <span>HYDRATION_SUCCESSFUL_ID_88</span>
+            <span>GRID_SYSTEM_COLLISION_ZERO</span>
+            <span>RESPONSIVE_BREAKPOINTS_ENGAGED</span>
+            <span>LCP_MEASURED_AT_840MS</span>
+        </div>
+    </div>
+
+    <div class="scroll-progress">
+        <div class="progress-dot active" data-target="hero"></div>
+        <div class="progress-dot" data-target="project-1"></div>
+        <div class="progress-dot" data-target="project-2"></div>
+        <div class="progress-dot" data-target="project-3"></div>
+        <div class="progress-dot" data-target="about"></div>
+        <div class="progress-dot" data-target="contact"></div>
+    </div>
+
+    <header>
+        <div class="sys-info">
+            <div>ARCHITECT: [SYSTEM_ZERO]</div>
+            <div>STATUS: READY_FOR_DEPLOY</div>
+            <div id="clock">00:00:00</div>
+        </div>
+        <div class="status-pill">
+            <div class="status-dot"></div>
+            <span>RENDER_ENGINE: OPTIMAL</span>
+        </div>
+    </header>
+
+    <div id="tweaks">
+        <div style="margin-bottom: 5px; color: var(--accent);">[DEBUG_OS]</div>
+        <button class="tweak-btn" onclick="toggleAuto()">AUTO_RUN: <span id="auto-status">OFF</span></button>
+        <button class="tweak-btn" onclick="setAccent('oklch(58% 0.18 255)')">BLUE</button>
+        <button class="tweak-btn" onclick="setAccent('oklch(62% 0.16 145)')">GREEN</button>
+    </div>
+
+    <svg class="pixel-bot" viewBox="0 0 20 20">
+        <rect x="4" y="4" width="12" height="10" fill="var(--fg)"></rect>
+        <rect x="6" y="6" width="2" height="2" fill="var(--accent)"></rect>
+        <rect x="12" y="6" width="2" height="2" fill="var(--accent)"></rect>
+        <rect x="2" y="8" width="2" height="4" fill="var(--muted)"></rect>
+        <rect x="16" y="8" width="2" height="4" fill="var(--muted)"></rect>
+    </svg>
+
+    <main class="scroller">
+        
+        <!-- Hero -->
+        <section id="hero">
+            <div class="coord-marker" style="top: 2rem; left: 2rem;">LN: 001 // COL: 001</div>
+            <span class="kicker">ELITE_DIGITAL_CRAFT // 2026</span>
+            <h1 class="glitch-text">ELITE_WEB<br>ARCHITECTURE</h1>
+            <div class="pixel-divider"></div>
+            <p style="color: var(--muted); font-family: var(--font-mono); font-size: 0.9rem; max-width: 45ch; line-height: 1.6;">
+                I transform complex technical requirements into stunning, high-performance digital interfaces. Precision engineering meets uncompromising aesthetics.
+            </p>
+            <div class="tech-spec">
+                <div>CORE: <span>REACT_NEXT_V15</span></div>
+                <div>TYPE: <span>SF_PRO_VAR</span></div>
+                <div>LCP: <span>&lt;1.0S</span></div>
+            </div>
+        </section>
+
+        <!-- Project 1 -->
+        <section id="project-1">
+            <div class="project-card">
+                <div class="image-frame">
+                    <div class="style-chip">PERFORMANCE: 100/100</div>
+                    <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?auto=format&amp;fit=crop&amp;q=80&amp;w=1200" alt="SaaS Dashboard UI">
+                    <div class="meta-tag">UI_MOD: DASHBOARD_CORE</div>
+                </div>
+                <div>
+                    <span class="kicker">SAAS_ECOSYSTEM // 2025</span>
+                    <h2>KRYPTO<br>INTERFACE</h2>
+                    <p style="color: var(--muted); line-height: 1.6; max-width: 45ch; margin-bottom: 1.5rem;">
+                        A data-dense financial dashboard prioritizing clarity and real-time synchronization. Built with custom WebGL visualizations and sub-second latency.
+                    </p>
+                    <div class="tech-spec">
+                        <div>NODES: <span>1,240</span></div>
+                        <div>STACK: <span>THREE_JS</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Project 2 -->
+        <section id="project-2">
+            <div class="project-card" style="grid-template-columns: 1.2fr 1fr;">
+                <div style="text-align: right;">
+                    <span class="kicker" style="justify-content: flex-end;">E_COMMERCE // HIGH_FIDELITY</span>
+                    <h2>LUXE<br>PLATFORM</h2>
+                    <p style="color: var(--muted); line-height: 1.6; max-width: 45ch; margin-left: auto; margin-bottom: 1.5rem;">
+                        A bespoke luxury commerce engine. Every interaction is tailored to reflect brand heritage, featuring smooth page transitions and micro-animations.
+                    </p>
+                    <div class="tech-spec" style="justify-content: flex-end;">
+                        <div>CONV_RATE: <span>+12%</span></div>
+                        <div>LOAD: <span>820MS</span></div>
+                    </div>
+                </div>
+                <div class="image-frame">
+                    <div class="style-chip">FIDELITY: ULTRA</div>
+                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&amp;fit=crop&amp;q=80&amp;w=1200" alt="E-commerce Web Design">
+                    <div class="meta-tag">ENGINE: VIEW_TRANSITIONS_API</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Project 3 -->
+        <section id="project-3">
+            <div class="project-card">
+                <div class="image-frame">
+                    <div class="style-chip">OPTIMIZATION: MAX</div>
+                    <img src="https://i.pinimg.com/736x/29/8d/37/298d37940574ab968918005865d95eb9.jpg" alt="AI Analytics Interface">
+                    <div class="meta-tag">UX_FLOW: PREDICTIVE</div>
+                </div>
+                <div>
+                    <span class="kicker">AI_INTEGRATION // 2024</span>
+                    <h2>NEURAL<br>NODES</h2>
+                    <p style="color: var(--muted); line-height: 1.6; max-width: 45ch; margin-bottom: 1.5rem;">
+                        Synthesizing complex AI data streams into a readable, intuitive interface. A study in information hierarchy and cognitive load management.
+                    </p>
+                    <div class="tech-spec">
+                        <div>ACCESS: <span>WCAG_AA</span></div>
+                        <div>INPUTS: <span>MULTIMODAL</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About -->
+        <section id="about">
+            <div style="max-width: 850px;">
+                <span class="kicker">MANIFESTO.EXE</span>
+                <h2>DESIGN_IS<br>ENGINEERING</h2>
+                <p style="font-size: 1.6rem; line-height: 1.4; margin-top: 2rem;">
+                    I approach web design as <span style="color: var(--accent)">structural architecture</span>. A beautiful site is only successful if it is fast, accessible, and scalable. I bridge the gap between creative vision and technical excellence.
+                </p>
+                <div class="tech-spec" style="margin-top: 3rem;">
+                    <div>EXPERIENCE: <span>10+ YRS</span></div>
+                    <div>PRECISION: <span>PIXEL_PERFECT</span></div>
+                    <div>PHILOSOPHY: <span>LESS_BUT_BETTER</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact">
+            <span class="kicker">INITIALIZE_COLLABORATION</span>
+            <h1 style="color: var(--accent);">BUILD_THE<br>FUTURE_</h1>
+            <div style="margin-top: 4rem; display: flex; gap: 4rem; font-family: var(--font-mono); font-size: 1.2rem;">
+                <a href="#" style="color: var(--fg); text-decoration: none; border-bottom: 2px solid var(--accent);">EMAIL</a>
+                <a href="#" style="color: var(--fg); text-decoration: none; border-bottom: 2px solid var(--accent);">nguyenthanh230627@gmail.com</a>
+                <a href="#" style="color: var(--fg); text-decoration: none; border-bottom: 2px solid var(--accent);">LINKED_IN</a>
+            </div>
+            <div class="coord-marker" style="bottom: 2rem; right: 2rem;">EOF_SYSTEM_STREAM</div>
+        </section>
+
+    </main>
+
+    <script>
+        const cursor = document.getElementById('cursor');
+        const scroller = document.querySelector('.scroller');
+        const clock = document.getElementById('clock');
+        const sections = document.querySelectorAll('section');
+        const dots = document.querySelectorAll('.progress-dot');
+        let autoInterval = null;
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        setInterval(() => {
+            const now = new Date();
+            clock.innerText = now.toTimeString().split(' ')[0];
+        }, 1000);
+
+        scroller.addEventListener('scroll', () => {
+            let current = "";
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scroller.scrollTop >= sectionTop - window.innerHeight/2) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            dots.forEach(dot => {
+                dot.classList.remove('active');
+                if (dot.getAttribute('data-target') === current) {
+                    dot.classList.add('active');
+                }
+            });
+        });
+
+        function toggleAuto() {
+            const status = document.getElementById('auto-status');
+            if(autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                status.innerText = "OFF";
+            } else {
+                status.innerText = "ON";
+                autoInterval = setInterval(() => {
+                    const current = Math.round(scroller.scrollTop / window.innerHeight);
+                    const next = (current + 1) % sections.length;
+                    scroller.scrollTo({ top: next * window.innerHeight, behavior: 'smooth' });
+                }, 4000);
+            }
+        }
+
+        function setAccent(color) {
+            document.documentElement.style.setProperty('--accent', color);
+        }
+
+        // Section indexing
+        sections.forEach((s, i) => s.setAttribute('data-screen-label', `MODULE_0${i+1}`));
+    </script>
+
+
+</body></html>
